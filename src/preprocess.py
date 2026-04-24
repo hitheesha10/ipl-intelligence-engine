@@ -1,17 +1,15 @@
 import pandas as pd
 
 def load_data(path):
-    df = pd.read_csv(path)
+    df = pd.read_csv(path, index_col=0)
 
+    # Fix types
     df['Date'] = pd.to_datetime(df['Date'])
-    df['Year'] = df['Date'].dt.year
+    df['Match ID'] = df['Match ID'].astype(str)
 
-    df['Batter'] = df['Batter'].str.strip().str.title()
-    df['Bowler'] = df['Bowler'].str.strip().str.title()
-
-    df.fillna({
-        'Method': 'Not Out',
-        'Runs to Get': 0
-    }, inplace=True)
+    # Fill missing
+    df['Method'].fillna('Not Out', inplace=True)
+    df['Player Out'].fillna('None', inplace=True)
+    df['Runs to Get'].fillna(0, inplace=True)
 
     return df

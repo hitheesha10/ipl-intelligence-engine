@@ -3,6 +3,8 @@ def generate_insight(df):
     chase_win = df['Chased Successfully'].mean() * 100
 
     if chase_win > 55:
-        return "Chasing gives teams a strategic advantage."
+        return "Chasing is the dominant winning strategy."
+    elif chase_win < 45:
+        return "Defending totals is more effective."
     else:
-        return "Defending totals remains the stronger strategy."
+        return "Balanced competition between chasing and defending."
