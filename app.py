@@ -2,16 +2,17 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Import from src (MODULAR ARCHITECTURE)
+# Import modular code
 from src.preprocess import load_data
 from src.features import create_features
 from src.model import train_model
 from src.utils import generate_insight
 
-
-# ---------------- PAGE CONFIG ---------------- #
+# ---------------- CONFIG ---------------- #
 st.set_page_config(layout="wide")
 st.title("🏏 IPL Intelligence Engine")
+
+FEATURE_COLS = ['Runs to Get', 'Balls Remaining', 'Innings Wickets']
 
 
 # ---------------- LOAD DATA ---------------- #
@@ -25,9 +26,8 @@ def load_pipeline():
 df, model, acc = load_pipeline()
 
 
-# ---------------- COMMENTARY FUNCTION ---------------- #
+# ---------------- COMMENTARY ENGINE ---------------- #
 def generate_commentary(row):
-
     if row['Wicket'] == 1:
         return f"💥 WICKET! {row['Player Out']} is out ({row['Method']})!"
     elif row['Batter Runs'] == 6:
@@ -111,9 +111,8 @@ with tab3:
     match_df = match_df.sort_values(['Innings', 'Over', 'Ball']).copy()
     match_df['ball_number'] = range(len(match_df))
 
-    match_df['win_prob'] = model.predict_proba(
-        match_df[['Runs to Get', 'Balls Remaining', 'Innings Wickets']]
-    )[:, 1]
+    # ✅ FIXED: Proper feature usage
+    match_df['win_prob'] = model.predict_proba(match_df[FEATURE_COLS])[:, 1]
 
     fig, ax = plt.subplots()
     ax.plot(match_df['ball_number'], match_df['win_prob'])
@@ -133,14 +132,21 @@ with tab3:
     else:
         st.info("Highly competitive match with momentum shifts.")
 
-    # Predictor
+    # ---------------- PREDICTOR ---------------- #
     st.subheader("🎯 Live Match Predictor")
 
     runs = st.number_input("Runs Needed", 1, 300)
     balls = st.number_input("Balls Remaining", 1, 120)
     wickets = st.slider("Wickets Lost", 0, 10)
 
-    prob = model.predict_proba([[runs, balls, wickets]])[0][1]
+    # ✅ FIXED: DataFrame input
+    input_df = pd.DataFrame({
+        'Runs to Get': [runs],
+        'Balls Remaining': [balls],
+        'Innings Wickets': [wickets]
+    })
+
+    prob = model.predict_proba(input_df)[0][1]
 
     st.metric("Win Probability", f"{round(prob*100,2)}%")
 
@@ -201,9 +207,8 @@ with tab5:
 
     replay_df['commentary'] = replay_df.apply(generate_commentary, axis=1)
 
-    replay_df['win_prob'] = model.predict_proba(
-        replay_df[['Runs to Get', 'Balls Remaining', 'Innings Wickets']]
-    )[:, 1]
+    # ✅ FIXED: proper feature usage
+    replay_df['win_prob'] = model.predict_proba(replay_df[FEATURE_COLS])[:, 1]
 
     ball_index = st.slider("Scrub Through Match", 0, len(replay_df) - 1, 0)
 

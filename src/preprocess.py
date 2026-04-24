@@ -8,8 +8,8 @@ def load_data(path):
     df['Match ID'] = df['Match ID'].astype(str)
 
     # Fill missing
-    df['Method'].fillna('Not Out', inplace=True)
-    df['Player Out'].fillna('None', inplace=True)
-    df['Runs to Get'].fillna(0, inplace=True)
+    df['Method'] = df['Method'].fillna('Not Out')
+    df['Player Out'] = df['Player Out'].fillna('None')
+    df['Runs to Get'] = df['Runs to Get'].fillna(0)
 
     return df
