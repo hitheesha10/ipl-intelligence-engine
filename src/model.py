@@ -5,24 +5,31 @@ FEATURE_COLS = ['Runs to Get', 'Balls Remaining', 'Innings Wickets']
 
 def train_model(df):
 
-    # Use only chase data
-    df_chase = df[df['Innings'] == 2].copy()
+    # Use only second innings (chasing scenario)
+    df_model = df[df['Innings'] == 2].copy()
 
-    # Drop missing safely
-    df_chase = df_chase.dropna(subset=FEATURE_COLS + ['Chased Successfully'])
+    # Drop rows where target is missing
+    df_model = df_model.dropna(subset=['Chased Successfully'])
 
-    # ✅ Ensure DataFrame (not numpy)
-    X = df_chase[FEATURE_COLS]
-    y = df_chase['Chased Successfully']
+    # Features & target
+    X = df_model[FEATURE_COLS]
+    y = df_model['Chased Successfully']
 
+    # Train-test split
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42
     )
 
-    model = RandomForestClassifier(n_estimators=100, random_state=42)
+    # Model
+    model = RandomForestClassifier(
+        n_estimators=100,
+        max_depth=10,
+        random_state=42
+    )
 
     model.fit(X_train, y_train)
 
+    # Accuracy
     accuracy = model.score(X_test, y_test)
 
     return model, accuracy

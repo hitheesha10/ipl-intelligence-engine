@@ -2,9 +2,6 @@ import numpy as np
 
 def create_features(df):
 
-    df = df.copy()  # ✅ avoid chained issues
-
-    # ---------------- BASIC FEATURES ---------------- #
     df['Year'] = df['Date'].dt.year
 
     df['is_six'] = (df['Batter Runs'] == 6).astype(int)
@@ -15,23 +12,20 @@ def create_features(df):
         (df['Valid Ball'] == 1)
     ).astype(int)
 
-    # ---------------- PHASE (VECTORIZED - FASTER) ---------------- #
-    df['Phase'] = np.select(
-    [
-        df['Over'] <= 6,
-        (df['Over'] > 6) & (df['Over'] <= 15),
-        df['Over'] > 15
-    ],
-    ['Powerplay', 'Middle', 'Death'],
-    default='Unknown'   # ✅ FIX
-)
-    # ---------------- PRESSURE INDEX (SAFE) ---------------- #
-    df['Balls Remaining'] = df['Balls Remaining'].replace(0, 1)
+    # ✅ FIXED PHASE (NO np.select issue)
+    def get_phase(over):
+        if over <= 6:
+            return 'Powerplay'
+        elif over <= 15:
+            return 'Middle'
+        else:
+            return 'Death'
 
-    df['pressure_index'] = df['Runs to Get'] / df['Balls Remaining']
+    df['Phase'] = df['Over'].apply(get_phase)
 
-    # Clip extreme values (realistic range)
-    df['pressure_index'] = df['pressure_index'].clip(0, 10)
-    df['run_rate_required'] = df['Runs to Get'] / df['Balls Remaining'] * 6
+    # Pressure index
+    df['pressure_index'] = (
+        df['Runs to Get'] / (df['Balls Remaining'] + 1)
+    )
 
     return df
